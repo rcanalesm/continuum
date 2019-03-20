@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>BAC Desktop</title>
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/demo.css">
+
+		<!-- Bibliotecas requeridas -->
+		<script type="text/javascript" src="lib/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="lib/stapes.min.js"></script>
+        <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+		<script type="text/javascript" src="bacdesktop2.min.js"></script>
+		
+		<!-- Utils del tester -->
+        <script type="text/javascript" src="lib/demo.js"></script>        
+
+		<script type="text/javascript">
+				
+		//Cliente desktop utilizado en las operaciones
+		var desktopClient;
+	
+		function prepareDeskClient(){
+			//URL del servicios de BAC Desktop 2
+			var endpoint = $("#endpoint").val();				
+			//Crea una instancia del cliente BacDesktop
+			desktopClient = new DesktopClient({
+				endpoint: endpoint,
+				bootstrapSupport: true,
+				debug: true
+			});						
+		}		
+		
+		$(document).ready(function() {
+            //Pedir firma
+            $("#signatureButton").click(function(){			
+				//Inicializa el cliente, de ocuparse
+				prepareDeskClient();			
+				//URL del servicios de BAC Desktop 2
+				var padType = $("#padType").val();							
+                //Obtiene el tipo de tramite del GUI
+                var name = $("#name").val();
+                //Arma la estructura de mensaje que ocupa BAC Desktop
+                var request = {
+                    module: "signature",
+                    operationCode: "S001",
+                    userName: "jmartinezco",
+					position: "center",
+                    modal: true};
+
+                //Agrega parametros adicionales al mensaje
+                request.params = {
+                    "customerName" : name,
+					 "rawBase64Prefix" : false,
+					 "signaturePad" : padType
+                };
+
+                //Realiza la comunicacion con el BAC Desktop
+                desktopClient.sendRequest(request, function(response){
+                    //Imprime salida
+                    printResponse("#sayHelloResult", response);
+                });
+				
+            });
+
+		});
+
+		</script>
+	</head>
+	<body>
+        <div class="jumbotron">
+            <h3><span class="label label-danger">BACDesktop 2</span></h3>
+            <h1>Hello! Module.</h1>
+            <p>Este secci&oacute;n contiene ejemplos de invocaciones a las principales funciones del m&oacute;dulo <b>Hello</b> de BAC Desktop.<br>
+            Este m&oacute;dulo contiene funcionalidad basica para iniciarse en el desarrollo de la plataforma.</p>
+            <p><a class="btn btn-danger btn-lg" href="index.htm" role="button">Ir a Inicio</a></p>
+        </div>
+        
+        <div class="panel panel-danger">
+			<div class="panel-heading"><h4>BACDesktop Service</h4></div>
+            <div class="panel-body ">
+                <div class="row">
+                    <div class="col-md-12">					
+						<p>Especifique la URL del endpoint donde esta el servicio que atiende el BAC Desktop 2.</p>
+                        <form>
+                            <div class="form-group">
+                                <label for="endpoint">Endpoint:</label>
+                                <input type="text" value="http://localhost:9091/portal" class="form-control" id="endpoint" placeholder="URL">
+                            </div>
+                            <div class="form-group">
+                                <label for="endpoint">Tipo de Pad (Tipos soportados: STU-430 y STU-300):</label>
+                                <input type="text" value="STU-430" class="form-control" id="padType" placeholder="="STU">
+                            </div>							
+                        </form>					
+					
+                    </div>
+                </div>
+            </div>
+        </div>	
+		
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Firmar</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad envia un parametro de capturado en la pagina, y solicita su firma electronica en el panel del Desktop.</p>
+
+                        <form>
+                            <div class="form-group">
+                                <label for="name">Nombre</label>
+                                <input type="text" value="Leonel Ronaldo" class="form-control" id="name" placeholder="Nombre">
+                            </div>
+                        </form>
+                        <button id="signatureButton" class="btn btn-primary btn-lg">Firma</button>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="sayHelloResult">...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+	</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>BAC Desktop</title>
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/demo.css">
+
+		<script type="text/javascript" src="lib/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="lib/stapes.min.js"></script>
+        <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+        <script type="text/javascript" src="lib/demo.js"></script>
+        <script type="text/javascript" src="bacdesktop2.js"></script>
+
+		<script type="text/javascript">
+
+		//Cliente desktop utilizado en las operaciones
+		var desktopClient;
+	
+		function prepareDeskClient(){
+			//URL del servicios de BAC Desktop 2
+			var endpoint = $("#endpoint").val();				
+			//Crea una instancia del cliente BacDesktop
+			desktopClient = new DesktopClient({
+				endpoint: endpoint,
+				bootstrapSupport: true,
+				debug: true
+			});						
+		}
+		
+		$(document).ready(function() {
+
+            //Listar las impresoras
+			$("#listPrinterButton").click(function(){
+				//Inicializa el cliente, de ocuparse
+				prepareDeskClient();				
+                //ID unico del mensaje
+                var uniqueId = new Date().getTime();
+                //Arma la estructura de mensaje que ocupa BAC Desktop
+                 var request = {
+                     module: "printer",
+                     operationCode: "P001",
+                     userName: "jmartinezco",
+					 modalType: "spinner",
+                     tramitId: uniqueId};
+
+                //Realiza la comunicacion con el BAC Desktop
+                desktopClient.sendRequest(request, function(response){
+                    //Imprime los datos en *cristiano
+                    if(response && response.resultContent){
+                        var printers = response.resultContent.params.printerList;
+                        $("#listPrinterResultChristian").text(printers);
+                    }
+                    //Imprime la trama
+                    printResponse("#listPrinterResult", response);
+                });
+			});
+
+
+            //Impresion de prueba local (por driver)
+            $("#printSP35Button").click(function(){
+                testPrint(desktopClient, "P003");
+            });
+            $("#printFP65i5Button").click(function(){
+                testPrint(desktopClient, "P004");
+            });
+            $("#printCE840USBButton").click(function(){
+                testPrint(desktopClient, "P005");
+            });
+
+            //Impresion de prueba local (por red)
+            $("#printIPButton").click(function(){
+                testPrintNetwork(desktopClient, "P006");
+            });
+
+            //Listar los puertos
+            $("#listPortButton").click(function(){
+				//Inicializa el cliente, de ocuparse
+				prepareDeskClient();				
+                //ID unico del mensaje
+                var uniqueId = new Date().getTime();
+                //Arma la estructura de mensaje que ocupa BAC Desktop
+                var request = {
+                    module: "printer",
+                    operationCode: "P007",
+                    userName: "jmartinezco",
+					modalType: "spinner",
+                    tramitId: uniqueId};
+
+                //Realiza la comunicacion con el BAC Desktop
+                desktopClient.sendRequest(request, function(response){
+                    //Imprime los datos en *cristiano
+                    if(response && response.resultContent){
+                        var printers = response.resultContent.params.portList;
+                        $("#listPortResultChristian").text(printers);
+                    }
+                    //Imprime la trama
+                    printResponse("#listPortResult", response);
+                });
+            });
+
+            //Impresion de prueba local (por red)
+            $("#customerPrintButton").click(function(){
+                testPrintCustomer(desktopClient);
+            });
+		});
+
+		function testPrint(desktopClient, operationCode){
+			//Inicializa el cliente, de ocuparse
+			prepareDeskClient();			
+            //Obtiene el tipo de tramite del GUI
+            var printerName = $("#printerName").val();
+            if(printerName == ''){
+                alert("Debe especificar la impresora");
+                return false;
+            }
+            //Arma la estructura de mensaje que ocupa BAC Desktop
+            var request = {
+                module: "printer",
+                operationCode: operationCode,
+                userName: "jmartinezco"};
+
+            //Agrega parametros adicionales al mensaje
+            request.params = {
+                "printerName" : printerName
+            };
+
+            //Realiza la comunicacion con el BAC Desktop
+            desktopClient.sendRequest(request, function(response){
+                //Imprime la trama
+                printResponse("#printResult", response);
+            });
+		}
+
+        function testPrintNetwork(desktopClient, operationCode){
+			//Inicializa el cliente, de ocuparse
+			prepareDeskClient();			
+            //Obtiene el tipo de tramite del GUI
+            var printerIP = $("#printerIP").val();
+            if(printerIP == ''){
+                alert("Debe especificar la IP");
+                return false;
+            }
+            //ID unico del mensaje
+            var uniqueId = new Date().getTime();
+            //Arma la estructura de mensaje que ocupa BAC Desktop
+            var request = {
+                module: "printer",
+                operationCode: operationCode,
+                userName: "jmartinezco",
+				modalType: "spinner",
+                tramitId: uniqueId};
+
+            //Agrega parametros adicionales al mensaje
+            request.params = {
+                "printerIP" : printerIP
+            };
+
+            //Realiza la comunicacion con el BAC Desktop
+            desktopClient.sendRequest(request, function(response){
+                //Imprime la trama
+                printResponse("#printResult", response);
+            });
+        }
+
+        function testPrintCustomer(desktopClient){
+			//Inicializa el cliente, de ocuparse
+			prepareDeskClient();			
+            //Obtiene los datos del cliente
+            var customerName = $("#customerName").val();
+            if(customerName == ''){
+                alert("Debe especificar el nombre de usuario");
+                return false;
+            }
+            var cardNumber = $("#customerCardNumber").val();
+            if(cardNumber == ''){
+                alert("Debe especificar la tarjeta");
+                return false;
+            }
+            var printerType = $("input[type='radio'][name='customerPrinterType']:checked").val();
+            if(printerType == ''){
+                alert("Debe especificar el tipo de impresora");
+                return false;
+            }
+            var printerName = $("#customerCardNumber").val();
+            if(printerName == ''){
+                alert("Debe especificar el nombre de impresora");
+                return false;
+            }
+
+            //Arma la estructura de mensaje que ocupa BAC Desktop
+            var request = {
+                module: "printer",
+                operationCode: "P002",
+                userName: "jmartinezco"};
+
+            //Agrega parametros adicionales al mensaje
+            request.params = {
+                "customerName" : customerName,
+                "clientAccount" : cardNumber,
+                "printerType" : printerType,
+                "printerName" : printerType
+            };
+
+            //Realiza la comunicacion con el BAC Desktop
+            desktopClient.sendRequest(request, function(response){
+                //Imprime la trama
+                printResponse("#customerPrintResult", response);
+            });
+        }
+		</script>
+	</head>
+	<body>
+        <div class="jumbotron">
+            <h3><span class="label label-danger">BACDesktop 2</span></h3>
+            <h1>Print Module.</h1>
+            <p>Este secci&oacute;n contiene ejemplos de invocaciones a las principales funciones del m&oacute;dulo de <b>Emboce/Print</b> de BAC Desktop.</p>
+            <p><a class="btn btn-danger btn-lg" href="index.htm" role="button">Ir a Inicio</a></p>
+        </div>
+
+        <div class="panel panel-danger">
+			<div class="panel-heading"><h4>BACDesktop Service</h4></div>
+            <div class="panel-body ">
+                <div class="row">
+                    <div class="col-md-12">
+					
+						<p>Especifique la URL del endpoint donde esta el servicio que atiende el BAC Desktop 2.</p>
+
+                        <form>
+                            <div class="form-group">
+                                <label for="endpoint">Endpoint:</label>
+                                <input type="text" value="http://localhost:9091/portal" class="form-control" id="endpoint" placeholder="URL">
+                            </div>
+                        </form>					
+					
+                    </div>
+                </div>
+            </div>
+        </div>	
+		
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Listar Impresoras</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad consulta el listado de impresoras que se encuentran instaladas.</p>
+                        <p><button id="listPrinterButton" class="btn btn-primary btn-lg">Consultar</button></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="listPrinterResult">...</span></p>
+                        </div>
+                        <div class="panel">
+                            <p><span id="listPrinterResultChristian"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Impresi&oacute;n Local</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad envia el nombre de la impresora para realizar una impresion de prueba.</p>
+                        <form>
+                            <div class="form-group">
+                                <label for="printerName">Nombre impresora</label>
+                                <input type="text" class="form-control" id="printerName" placeholder="Nombre impresora">
+                            </div>
+                        </form>
+                        <button id="printSP35Button" class="btn btn-primary btn-lg">Imprimir SP35</button>
+                        <button id="printFP65i5Button" class="btn btn-primary btn-lg">Imprimir FP65i5</button>
+                        <button id="printCE840USBButton" class="btn btn-primary btn-lg">Imprimir CE840USB</button>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="printResult">...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Impresi&oacute;n de Red</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad envia la IP de la impresora para realizar una impresion de prueba.</p>
+                        <form>
+                            <div class="form-group">
+                                <label for="printerName">IP de impresora</label>
+                                <input type="text" class="form-control" id="printerIP" placeholder="IP de impresora">
+                            </div>
+                        </form>
+                        <button id="printIPButton" class="btn btn-primary btn-lg">Imprimir</button>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="printIPResult">...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Puertos Seriales</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad consulta el listado de puertos seriales que tiene el equipo.</p>
+                        <p><button id="listPortButton" class="btn btn-primary btn-lg">Consultar</button></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="listPortResult">...</span></p>
+                        </div>
+                        <div class="panel">
+                            <p><span id="listPortResultChristian"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Impresi&oacute;n para Cliente</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Esta funcionalidad envia un conjunto de parametros para una impresion con datos reales.</p>
+                        <form>
+                            <div class="form-group">
+                                <label for="customerName">Nombre de Cliente</label>
+                                <input type="text" class="form-control" id="customerName" placeholder="Nombre de Cliente">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerCardNumber">No de CTA/Tarjeta</label>
+                                <input type="text" class="form-control" id="customerCardNumber" placeholder="No de Tarjeta">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customerCardNumber">Nombre Impresora</label>
+                                <input type="text" class="form-control" id="customerPrinterNumber" placeholder="Nombre Impresora">
+                            </div>
+
+                            <div class="form-group">
+                                <div class="btn-group" data-toggle="buttons">
+                                    <label class="btn btn-default">
+                                        <input type="radio" name="customerPrinterType" value="SP35" checked="checked"/> SP35
+                                    </label>
+                                    <label class="btn btn-default">
+                                        <input type="radio" name="customerPrinterType" value="FP65i" /> FP65i
+                                    </label>
+                                    <label class="btn btn-default">
+                                        <input type="radio" name="customerPrinterType" value="CE840USB" /> CE840USB
+                                    </label>
+                                </div>
+                            </div>
+
+                        </form>
+                        <button id="customerPrintButton" class="btn btn-primary btn-lg">Imprimir</button>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="customerPrintResult">...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+	</body>
+</html>

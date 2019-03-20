@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>BAC Desktop</title>
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/demo.css">
+
+		<!-- Bibliotecas requeridas -->
+
+		<script type="text/javascript" src="lib/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="lib/stapes.min.js"></script>
+        <script type="text/javascript" src="lib/bootstrap.min.js"></script>
+		<script type="text/javascript" src="bacdesktop2.fp.js"></script>
+
+		
+		<!-- Utils del tester -->
+        <script type="text/javascript" src="lib/demo.js"></script>        
+		<script type="text/javascript">
+		
+		function otherSelectCheck(nameSelect)
+		{
+			if(nameSelect){
+				otherOptionValue = document.getElementById("otherOption").value;
+				if(otherOptionValue == nameSelect.value){
+					document.getElementById("otherDivCheck").style.display = "block";
+				}
+				else{
+					document.getElementById("otherDivCheck").style.display = "none";
+				}
+			}
+			else{
+				document.getElementById("otherDivCheck").style.display = "none";
+			}
+		}
+		
+		//Cliente desktop utilizado en las operaciones
+		var desktopClient;
+	
+		function prepareDeskClient(){
+			//URL del servicios de BAC Desktop 2
+			//var endpoint = $("#endpoint").val();	
+			var endpoint =	"http://10.124.105.22:9085/portal";		
+			//Crea una instancia del cliente BacDesktop
+			desktopClient = new DesktopClient({
+				endpoint: endpoint,
+				bootstrapSupport: false,
+				debug: true
+			});						
+		}		
+		
+		$(document).ready(function() {
+		
+            //Operacion de prueba
+            $("#checkStatusButton").click(function(){
+				//Inicializa el cliente, de ocuparse
+				prepareDeskClient();
+			
+                //Obtiene el tipo de tramite del GUI
+                var customerName = $("#customerName").val();
+				var customerId = $("#customerId").val();
+                //ID unico del mensaje
+                var uniqueId = new Date().getTime();
+                //Arma la estructura de mensaje que ocupa BAC Desktop
+                var request = {
+                    module: "fingerprint",
+                    operationCode: "F001", 
+                    userName: "jmartinezco",
+                    tramitId: uniqueId,
+					bootstrapSupport: true,
+					log: false}; /* Id unico */
+
+				//Agrega parametros adicionales al mensaje
+                request.params = {
+					"personName" : customerName,
+					"identification" : customerId
+                };
+
+                //Realiza la comunicacion con el BAC Desktop
+                desktopClient.sendRequest(request, function(response){
+                    //Imprime salida
+                    printResponse("#sayHelloResult", response);
+                });
+            });
+			
+			$("#signatureButton").click(function(){			
+				//Inicializa el cliente, de ocuparse
+				prepareDeskClient();			
+				//URL del servicios de BAC Desktop 2
+				//var padType = $("#padType").val();
+				var padType = "STU-430";		
+                //Obtiene el tipo de tramite del GUI
+                var name = $("#customerName").val();
+                //Arma la estructura de mensaje que ocupa BAC Desktop
+                var request = {
+                    module: "signature",
+                    operationCode: "S001",
+                    userName: "jmartinezco",
+					position: "right",
+                    modal: true};
+
+                //Agrega parametros adicionales al mensaje
+                request.params = {
+                    "customerName" : name,
+					 "rawBase64Prefix" : false,
+					 "signaturePad" : padType
+                };
+
+                 //Realiza la comunicacion con el BAC Desktop
+                desktopClient.sendRequest(request, function(response){
+                    //Imprime salida
+                    printResponse("#sayHelloResult", response);
+                });
+				
+            });
+
+		});
+
+		</script>
+	</head>
+	<body>
+	<!--
+        <div class="jumbotron">
+            <h3><span class="label label-danger"></span></h3>
+            <h1>Formulario UMO</h1>
+            <p>Validaci&oacute;n del componente de UMO</p>
+            <p><a class="btn btn-danger btn-lg" href="index.htm" role="button">Ir a Inicio</a></p>
+        </div>
+-->
+<!--
+        <div class="panel panel-danger">
+			<div class="panel-heading"><h4>Información Personal</h4></div>
+            <div class="panel-body ">
+                <div class="row">
+                    <div class="col-md-12">
+					
+						<p>Especifique la URL del endpoint donde esta el servicio que atiende el BAC Desktop 2.</p>
+
+                        <form>
+                            <div class="form-group">
+                                <label for="endpoint">Endpoint:</label>
+                                <input type="text" value="http://10.124.105.22:9085/portal" class="form-control" id="endpoint" placeholder="URL"> //Staging 
+								<input type="text" value="https://msc/portal" class="form-control" id="endpoint" placeholder="URL">
+                            </div>
+                        </form>					
+                    </div>
+                </div>
+            </div>
+        </div>
+-->		
+		
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Informaci&oacute;n Personal</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+						<form>
+                            <div class="form-group">
+                                <label for="customerName">Nombre completo del cliente:</label>
+                                <input type="text" class="form-control" id="customerName" value="Ricardo Canales Madrigal" placeholder="">
+                            </div>
+                            <div class="form-group">
+                                <label for="customerId">N&uacute;mero de Identificaci&oacute;n:</label>
+                                <input type="number" class="form-control" id="customerId" value="402000849" placeholder="">
+                            </div>
+							<div class="form-group">
+                                <label for="customerPhoneNumber">N&uacute;mero de Teléfono:</label>
+                                <input type="number" class="form-control required" id="customerPhoneNumber" value="" placeholder="" >
+                            </div>
+						</form>								
+					</div>
+					<div class="col-md-6">
+						<form>
+							<div class="form-group">
+                                <label for="customerEmail">Correo Electr&oacute;nico:</label>
+                                <input type="text" class="form-control" id="customerEmail" value="" placeholder="">
+                            </div>
+							<div class="form-group">
+                                <label for="customerEmailDomain">Dominio:</label>                   
+								<select class="form-control" id="customerEmailDomain" onchange="otherSelectCheck(this);">
+								  <option value="gmail">@gmail.com</option>
+								  <option value="hotmailcom">@hotmail.com</option>
+								  <option value="hotmailes">@hotmail.es</option>
+								  <option value="yahoo">@yahoo.com</option>
+								  <option id = "otherOption" value="otro">Otro</option>
+								</select>
+                            </div>
+							<div class="form-group" id="otherDivCheck" style="display:none;">
+                                <label for="customerEmailDomainOther" type="hidden">Otro:</label>
+                                <input type="text" class="form-control" id="customerEmailDomainOther" value="@" placeholder="" type="hidden">
+                            </div>
+                        </form>								
+                    </div>
+                </div>
+            </div>
+        </div>	 
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><h4>Informaci&oacute;n Adicional</h4></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+						<form>
+                            <div class="form-group">
+                                <label for="conditionJob">Condici&oacute;n Laboral:</label>
+                                <!--<input type="text" class="form-control" id="conditionJob" value="" placeholder="">-->
+								<select class="form-control">
+								  <option value="asalariado">Asalariado</option>
+								  <option value="dependiente/pensionado">Dependiente o Pensionado</option>
+								  <option value="independiente">Profesional Independiente</option>
+								  <option value="propietario/empresario">Propietario o Empresario</option>
+								</select>
+                            </div>
+                            <div class="form-group">
+                                <label for="salary">Salario:</label>
+                                <input type="number" class="form-control" id="salary" value="" placeholder="">
+                            </div>
+							<div class="form-group">
+                                <label for="purchaseAmount">Monto de Compra:</label>
+                                <input type="number" class="form-control" id="purchaseAmount" value="" placeholder="">
+                            </div>
+                        </form>								
+						
+                        <p>
+							<button id="checkStatusButton" class="btn btn-primary btn-lg">Validar Huella</button>
+							<button id="signatureButton" class="btn btn-primary btn-lg">Validar Firma</button>
+						</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><b>Respuesta del Desktop:</b></p>
+                        <div class="panel panel-default output-panel">
+                            <p><span id="sayHelloResult">...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>			
+
+	</body>
+</html>
